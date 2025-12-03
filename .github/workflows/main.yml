@@ -44,8 +44,14 @@ jobs:
       # Save models to GitHub Repository
       - name: Save mlruns to repo
         run: |
-          git config --global user.name ${{ secrets.username }}
-          git config --global user.email ${{ secrets.email }}
+          # 1. Pastikan user.name dan user.email disetel untuk commit
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # 2. Tambahkan file dan commit
           git add mlruns/
-          git commit -m "Save mlruns from CI run"
-          git push origin master
+          git commit -m "Save mlruns from CI run" || echo "No changes to commit"
+
+          # 3. Push ke branch 'main' (pastikan ini branch Anda) menggunakan GITHUB_TOKEN bawaan
+          # GITHUB_TOKEN akan ditambahkan ke URL remote
+          git push https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
