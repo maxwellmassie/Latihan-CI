@@ -1,5 +1,4 @@
 name: CI
- 
 on:
   push:
     branches:
@@ -7,40 +6,46 @@ on:
   pull_request:
     branches:
       - main
- 
+
 env:
   CSV_URL: "MLproject/train_pca.csv"
- 
+
 jobs:
   build:
     runs-on: ubuntu-latest
- 
+    
+    # --- PERBAIKAN PENTING DI SINI ---
+    # Memberikan GITHUB_TOKEN izin 'write' pada konten agar dapat melakukan 'git push'.
+    permissions:
+      contents: write
+    # --------------------------------
+
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE
       - uses: actions/checkout@v3
- 
+
       # Setup Python 3.12.7
       - name: Set up Python 3.12.7
         uses: actions/setup-python@v4
         with:
           python-version: "3.12.7"
-      
+
       # Check Env Variables
       - name: Check Env
         run: |
           echo $CSV_URL
- 
+
       # Install mlflow
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install mlflow
-      
+
       # Run as a mlflow project
       - name: Run mlflow project
         run: |
-          mlflow run MLproject --env-manager=local 
- 
+          mlflow run MLproject --env-manager=local
+
       # Save models to GitHub Repository
       - name: Save mlruns to repo
         run: |
@@ -49,9 +54,10 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
           # 2. Tambahkan file dan commit
+          # Perintah ini akan sukses karena GITHUB_TOKEN sudah memiliki izin write.
           git add mlruns/
           git commit -m "Save mlruns from CI run" || echo "No changes to commit"
 
-          # 3. Push ke branch 'main' (pastikan ini branch Anda) menggunakan GITHUB_TOKEN bawaan
-          # GITHUB_TOKEN akan ditambahkan ke URL remote
+          # 3. Push ke branch 'main' menggunakan GITHUB_TOKEN bawaan
+          # Pastikan URL remote menyertakan GITHUB_TOKEN untuk otentikasi.
           git push https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
